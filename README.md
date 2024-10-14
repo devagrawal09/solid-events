@@ -2,6 +2,28 @@
 
 A set of primitives for declarative event composition and state derivation for solidjs. You can think of it as a much simpler version of Rxjs that integrates well with Solidjs.
 
+## Contents
+- [solid-events](#solid-events)
+  - [Contents](#contents)
+  - [`createEvent`](#createevent)
+    - [Tranformation](#tranformation)
+    - [Disposal](#disposal)
+    - [Halting](#halting)
+    - [Async Events](#async-events)
+  - [`createSubject`](#createsubject)
+    - [`createAsyncSubject`](#createasyncsubject)
+    - [`createSubjectStore`](#createsubjectstore)
+  - [`createTopic`](#createtopic)
+  - [`createPartition`](#createpartition)
+  - [Use Cases](#use-cases)
+    - [State Derived from Events](#state-derived-from-events)
+    - [Event Composition](#event-composition)
+    - [Optimistic UI](#optimistic-ui)
+    - [Fine Grained Mutations](#fine-grained-mutations)
+    - [Alternative to RxJS](#alternative-to-rxjs)
+    - [Functional Reactive Programming](#functional-reactive-programming)
+    - [Full-Stack Reactivity](#full-stack-reactivity)
+
 ## `createEvent`
 
 Returns an event handler and an event emitter. The handler can execute a callback when the event is emitted.
