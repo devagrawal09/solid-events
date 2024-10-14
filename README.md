@@ -7,6 +7,7 @@ A set of primitives for declarative event composition and state derivation for s
 ## Contents
 - [solid-events](#solid-events)
   - [Contents](#contents)
+  - [Installation](#installation)
   - [`createEvent`](#createevent)
     - [Tranformation](#tranformation)
     - [Disposal](#disposal)
@@ -25,6 +26,21 @@ A set of primitives for declarative event composition and state derivation for s
     - [Alternative to RxJS](#alternative-to-rxjs)
     - [Functional Reactive Programming](#functional-reactive-programming)
     - [Full-Stack Reactivity](#full-stack-reactivity)
+
+## Installation
+
+```bash
+npm install solid-events
+```
+or
+```bash
+pnpm install solid-events
+```
+or
+```bash
+bun install solid-events
+```
+
 
 ## `createEvent`
 
