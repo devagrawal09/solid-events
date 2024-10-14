@@ -2,6 +2,8 @@
 
 A set of primitives for declarative event composition and state derivation for solidjs. You can think of it as a much simpler version of Rxjs that integrates well with Solidjs.
 
+[Here is an implementation of the Strello demo that uses `solid-events`](https://github.com/devagrawal09/strello/pull/1/files).
+
 ## Contents
 - [solid-events](#solid-events)
   - [Contents](#contents)
