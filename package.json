@@ -1,6 +1,6 @@
 {
   "name": "solid-events",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Declarative event composition and state derivation primitives for Solidjs",
   "main": "index.ts",
   "scripts": {
