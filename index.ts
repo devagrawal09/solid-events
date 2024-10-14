@@ -1,4 +1,4 @@
-// import { createAsync } from "@solidjs/router";
+import { createAsync } from "@solidjs/router";
 import { Observable, Subject } from "rxjs";
 import {
   Accessor,
@@ -81,14 +81,14 @@ export function createSubject<T>(
   }
 }
 
-// export function createAsyncSubject<T>(
-//   source: () => Promise<T>,
-//   ...events: Array<Handler<T | ((prev: T) => T)>>
-// ) {
-//   const asyncSignal = createAsync(source);
-//   const subject = createMemo(() => createSubject(asyncSignal(), ...events));
-//   return () => subject()();
-// }
+export function createAsyncSubject<T>(
+  source: () => Promise<T>,
+  ...events: Array<Handler<T | ((prev: T) => T)>>
+) {
+  const asyncSignal = createAsync(source);
+  const subject = createMemo(() => createSubject(asyncSignal(), ...events));
+  return () => subject()();
+}
 
 export function createSubjectStore<T extends object = {}>(
   init: () => T,
