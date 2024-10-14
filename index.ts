@@ -2,17 +2,19 @@ import { createAsync } from "@solidjs/router";
 import { Observable, Subject } from "rxjs";
 import { Accessor, createMemo, createSignal, onCleanup } from "solid-js";
 
-export type Handler<E> = (<O>(transform: (e: E) => O) => Handler<O>) & {
+export type Handler<E> = (<O>(
+  transform: (e: E) => Promise<O> | O
+) => Handler<O>) & {
   $: Observable<E>;
 };
 export type Emitter<E> = (e: E) => void;
 
 function makeHandler<E>($: Observable<E>): Handler<E> {
-  function handler<O>(transform: (e: E) => O): Handler<O> {
+  function handler<O>(transform: (e: E) => Promise<O> | O): Handler<O> {
     const next$ = new Subject<O>();
-    const sub = $.subscribe((e) => {
+    const sub = $.subscribe(async (e) => {
       try {
-        next$.next(transform(e));
+        next$.next(await transform(e));
       } catch (e) {
         if (!(e instanceof HaltError)) throw e;
         console.info(e.message);
