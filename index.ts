@@ -33,6 +33,12 @@ export function createEvent<E = any>(): [Handler<E>, Emitter<E>] {
   return [makeHandler($), (e) => $.next(e)] as const;
 }
 
+export function createTopic<T>(...args: Handler<T>[]): Handler<T> {
+  const [onEvent, emitEvent] = createEvent<T>();
+  args.forEach((h) => h(emitEvent));
+  return onEvent;
+}
+
 export function createSubject<T>(
   init: T,
   ...events: Array<Handler<T | ((prev: T) => T)>>
