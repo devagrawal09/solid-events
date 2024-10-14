@@ -1,0 +1,74 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@solidjs/router':
+        specifier: ^0.14.8
+        version: 0.14.8(solid-js@1.9.2)
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.1
+      solid-js:
+        specifier: ^1.9.2
+        version: 1.9.2
+
+packages:
+
+  '@solidjs/router@0.14.8':
+    resolution: {integrity: sha512-S+rD5Twp0820cM03wEIYtb7/4KN7Cfr3BP+qPIqb7IXO/SZ72tWqHEMQsmcjDbr4yVfpA+5Sq0Y+xcq09y1gQA==}
+    peerDependencies:
+      solid-js: ^1.8.6
+
+  csstype@3.1.3:
+    resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
+
+  rxjs@7.8.1:
+    resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
+
+  seroval-plugins@1.1.1:
+    resolution: {integrity: sha512-qNSy1+nUj7hsCOon7AO4wdAIo9P0jrzAMp18XhiOzA6/uO5TKtP7ScozVJ8T293oRIvi5wyCHSM4TrJo/c/GJA==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      seroval: ^1.0
+
+  seroval@1.1.1:
+    resolution: {integrity: sha512-rqEO6FZk8mv7Hyv4UCj3FD3b6Waqft605TLfsCe/BiaylRpyyMC0b+uA5TJKawX3KzMrdi3wsLbCaLplrQmBvQ==}
+    engines: {node: '>=10'}
+
+  solid-js@1.9.2:
+    resolution: {integrity: sha512-fe/K03nV+kMFJYhAOE8AIQHcGxB4rMIEoEyrulbtmf217NffbbwBqJnJI4ovt16e+kaIt0czE2WA7mP/pYN9yg==}
+
+  tslib@2.7.0:
+    resolution: {integrity: sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==}
+
+snapshots:
+
+  '@solidjs/router@0.14.8(solid-js@1.9.2)':
+    dependencies:
+      solid-js: 1.9.2
+
+  csstype@3.1.3: {}
+
+  rxjs@7.8.1:
+    dependencies:
+      tslib: 2.7.0
+
+  seroval-plugins@1.1.1(seroval@1.1.1):
+    dependencies:
+      seroval: 1.1.1
+
+  seroval@1.1.1: {}
+
+  solid-js@1.9.2:
+    dependencies:
+      csstype: 3.1.3
+      seroval: 1.1.1
+      seroval-plugins: 1.1.1(seroval@1.1.1)
+
+  tslib@2.7.0: {}
