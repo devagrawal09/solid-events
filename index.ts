@@ -1,6 +1,14 @@
 import { createAsync } from "@solidjs/router";
 import { Observable, Subject } from "rxjs";
-import { Accessor, createMemo, createSignal, onCleanup } from "solid-js";
+import {
+  Accessor,
+  createComputed,
+  createMemo,
+  createSignal,
+  onCleanup,
+  untrack,
+} from "solid-js";
+import { createStore, produce, reconcile } from "solid-js/store";
 
 export type Handler<E> = (<O>(
   transform: (e: E) => Promise<O> | O
@@ -67,6 +75,28 @@ export function createAsyncSubject<T>(
   const asyncSignal = createAsync(source);
   const subject = createMemo(() => createSubject(asyncSignal(), ...events));
   return () => subject()();
+}
+
+export function createSubjectStore<T extends object = {}>(
+  init: () => T,
+  ...events: Array<Handler<(prev: T) => void>>
+): T;
+export function createSubjectStore<T extends object = {}>(
+  init: (() => T) | T | undefined,
+  ...events: Array<Handler<(prev: T) => void>>
+) {
+  if (typeof init === "function") {
+    const [store, setStore] = createStore<T>(untrack(init));
+    createComputed(() => setStore(reconcile(init())));
+    const event = createTopic(...events);
+    event((mutation) => setStore(produce(mutation)));
+    return store;
+  } else {
+    const [store, setStore] = init ? createStore<T>(init) : createStore();
+    const event = createTopic(...events);
+    event((mutation) => setStore(produce(mutation)));
+    return store;
+  }
 }
 
 export class HaltError extends Error {
