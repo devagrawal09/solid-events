@@ -53,7 +53,7 @@ onMessage(message => console.log(`Message emitted:`, message))
 ...
 
 emitIncrement(2)
-// logs "Message emitted: Increment by 2!"
+// logs "Message emitted: Increment by 2"
 ```
 
 ### Disposal
@@ -87,7 +87,7 @@ onMessage(message => console.log(`Message emitted:`, message))
 ...
 
 emitIncrement(2)
-// logs "Message emitted: Increment by 2!"
+// logs "Message emitted: Increment by 2"
 
 ...
 
@@ -137,7 +137,7 @@ createEffect(() => console.log(`count`, count()))
 ...
 
 emitIncrement(2)
-// logs "Message emitted: Increment by 2!"
+// logs "Message emitted: Increment by 2"
 // logs "count 2"
 
 emitReset()
@@ -226,10 +226,10 @@ onMessage(message => console.log(`Message emitted:`, message))
 ...
 
 emitIncrement(2)
-// logs "Message emitted: Increment by 2!"
+// logs "Message emitted: Increment by 2"
 
 emitDecrement(1)
-// logs "Message emitted: Decrement by 1!"
+// logs "Message emitted: Decrement by 1"
 ```
 
 ## `createPartition`
