@@ -211,7 +211,7 @@ Similar to `createSubject`, the first argument can be a signal that resets the v
 
 ## `createTopic`
 
-A topic combines multiple events into one.
+A topic combines multiple events into one. This is simply a more convenient way to merge events than manually iterating through them.
 
 ```ts
 const [onIncrement, emitIncrement] = createEvent()
