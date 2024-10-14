@@ -52,6 +52,10 @@ export function createSubject<T>(
   ...events: Array<Handler<T | ((prev: T) => T)>>
 ): Accessor<T>;
 export function createSubject<T>(
+  init: () => T,
+  ...events: Array<Handler<T | ((prev: T) => T)>>
+): Accessor<T>;
+export function createSubject<T>(
   init: undefined,
   ...events: Array<Handler<T | ((prev: T) => T)>>
 ): Accessor<T | undefined>;
@@ -60,12 +64,19 @@ export function createSubject<T>(
   ...events: Array<Handler<T | ((prev: T) => T)>>
 ): Accessor<T | undefined>;
 export function createSubject<T>(
-  init: T | undefined,
+  init: (() => T) | T | undefined,
   ...events: Array<Handler<T | ((prev: T) => T)>>
 ) {
-  const [signal, setSignal] = createSignal(init);
-  events.forEach((h) => h(setSignal));
-  return signal;
+  if (typeof init === "function") {
+    const memoSubject = createMemo(() =>
+      createSubject((init as () => T)(), ...events)
+    );
+    return () => memoSubject()();
+  } else {
+    const [signal, setSignal] = createSignal(init);
+    events.forEach((h) => h(setSignal));
+    return signal;
+  }
 }
 
 export function createAsyncSubject<T>(
