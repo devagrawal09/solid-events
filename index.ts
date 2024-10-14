@@ -1,4 +1,4 @@
-import { createAsync } from "@solidjs/router";
+// import { createAsync } from "@solidjs/router";
 import { Observable, Subject } from "rxjs";
 import {
   Accessor,
@@ -20,9 +20,11 @@ export type Emitter<E> = (e: E) => void;
 function makeHandler<E>($: Observable<E>): Handler<E> {
   function handler<O>(transform: (e: E) => Promise<O> | O): Handler<O> {
     const next$ = new Subject<O>();
-    const sub = $.subscribe(async (e) => {
+    const sub = $.subscribe((e) => {
       try {
-        next$.next(await transform(e));
+        const res = transform(e);
+        if (res instanceof Promise) res.then((o) => next$.next(o));
+        else next$.next(res);
       } catch (e) {
         if (!(e instanceof HaltError)) throw e;
         console.info(e.message);
@@ -79,14 +81,14 @@ export function createSubject<T>(
   }
 }
 
-export function createAsyncSubject<T>(
-  source: () => Promise<T>,
-  ...events: Array<Handler<T | ((prev: T) => T)>>
-) {
-  const asyncSignal = createAsync(source);
-  const subject = createMemo(() => createSubject(asyncSignal(), ...events));
-  return () => subject()();
-}
+// export function createAsyncSubject<T>(
+//   source: () => Promise<T>,
+//   ...events: Array<Handler<T | ((prev: T) => T)>>
+// ) {
+//   const asyncSignal = createAsync(source);
+//   const subject = createMemo(() => createSubject(asyncSignal(), ...events));
+//   return () => subject()();
+// }
 
 export function createSubjectStore<T extends object = {}>(
   init: () => T,
