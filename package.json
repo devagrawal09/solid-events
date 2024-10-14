@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest"
   },
-  "author": "Dev Agrawal (devagrawal09@gmail.com)",
+  "author": "Dev Agrawal <devagrawal09@gmail.com> (http://devagr.me/)",
   "license": "MIT",
   "dependencies": {
     "@solidjs/router": "^0.14.8",
