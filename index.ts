@@ -123,3 +123,12 @@ export class HaltError extends Error {
 export function halt(reason?: string): never {
   throw new HaltError(reason);
 }
+
+export function createPartition<T>(
+  handler: Handler<T>,
+  predicate: (arg: T) => boolean
+) {
+  const trueHandler = handler((p) => (predicate(p) ? p : halt()));
+  const falseHandler = handler((p) => (predicate(p) ? halt() : p));
+  return [trueHandler, falseHandler] as const;
+}
