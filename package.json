@@ -1,0 +1,15 @@
+{
+  "name": "solid-events",
+  "version": "0.0.1",
+  "description": "Declarative event composition and state derivation primitives for Solidjs",
+  "main": "index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "author": "Dev Agrawal (devagrawal09@gmail.com)",
+  "license": "MIT",
+  "dependencies": {
+    "rxjs": "^7.8.1",
+    "solid-js": "^1.9.2"
+  }
+}
