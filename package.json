@@ -9,7 +9,6 @@
   "author": "Dev Agrawal <devagrawal09@gmail.com> (http://devagr.me/)",
   "license": "MIT",
   "dependencies": {
-    "@solidjs/router": "^0.14.8",
     "rxjs": "^7.8.1",
     "solid-js": "^1.9.2"
   },

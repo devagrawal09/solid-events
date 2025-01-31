@@ -1,4 +1,3 @@
-import { createAsync } from "@solidjs/router";
 import { Observable, Subject } from "rxjs";
 import {
   Accessor,
@@ -23,8 +22,9 @@ function makeHandler<E>($: Observable<E>): Handler<E> {
     const sub = $.subscribe((e) => {
       try {
         const res = transform(e);
-        if (res instanceof Promise) res.then((o) => next$.next(o));
-        else next$.next(res);
+        if (res instanceof Promise)
+          res.then((o) => (next$.next(o), flushQueues()));
+        else pureQueue.push(() => next$.next(res));
       } catch (e) {
         if (!(e instanceof HaltError)) throw e;
         console.info(e.message);
@@ -40,13 +40,7 @@ function makeHandler<E>($: Observable<E>): Handler<E> {
 
 export function createEvent<E = any>(): [Handler<E>, Emitter<E>] {
   const $ = new Subject<E>();
-  return [makeHandler($), (e) => $.next(e)] as const;
-}
-
-export function createTopic<T>(...args: Handler<T>[]): Handler<T> {
-  const [onEvent, emitEvent] = createEvent<T>();
-  args.forEach((h) => h(emitEvent));
-  return onEvent;
+  return [makeHandler($), (e) => ($.next(e), flushQueues())] as const;
 }
 
 export function createSubject<T>(
@@ -81,15 +75,6 @@ export function createSubject<T>(
   }
 }
 
-export function createAsyncSubject<T>(
-  source: () => Promise<T>,
-  ...events: Array<Handler<T | ((prev: T) => T)>>
-) {
-  const asyncSignal = createAsync(source);
-  const subject = createMemo(() => createSubject(asyncSignal(), ...events));
-  return () => subject()();
-}
-
 export function createSubjectStore<T extends object = {}>(
   init: () => T,
   ...events: Array<Handler<(prev: T) => void>>
@@ -101,13 +86,11 @@ export function createSubjectStore<T extends object = {}>(
   if (typeof init === "function") {
     const [store, setStore] = createStore<T>(untrack(init));
     createComputed(() => setStore(reconcile(init())));
-    const event = createTopic(...events);
-    event((mutation) => setStore(produce(mutation)));
+    events.forEach((event) => event((mutation) => setStore(produce(mutation))));
     return store;
   } else {
     const [store, setStore] = init ? createStore<T>(init) : createStore();
-    const event = createTopic(...events);
-    event((mutation) => setStore(produce(mutation)));
+    events.forEach((event) => event((mutation) => setStore(produce(mutation))));
     return store;
   }
 }
@@ -133,4 +116,61 @@ export function createPartition<T>(
   const trueHandler = handler((p) => (predicate(p) ? p : halt()));
   const falseHandler = handler((p) => (predicate(p) ? halt() : p));
   return [trueHandler, falseHandler] as const;
+}
+
+export function createListener<E>(
+  handler: Handler<E>,
+  effect: (payload: E) => void
+) {
+  handler((e) => {
+    listenerQueue.push(() => effect(e));
+  });
+}
+
+let listenerQueue = [] as Function[];
+
+let runningListenerQueue = false;
+
+function flushListeners() {
+  if (runningListenerQueue) return;
+  runningListenerQueue = true;
+  listenerQueue.forEach((fn) => fn());
+  runningListenerQueue = false;
+}
+
+export function createMutationListener<E>(
+  handler: Handler<E>,
+  effect: (payload: E) => void
+) {
+  handler((e) => {
+    mutationListenerQueue.push(() => effect(e));
+  });
+}
+
+let mutationListenerQueue = [] as Function[];
+
+let runningMutationListenerQueue = false;
+
+function flushMutationListeners() {
+  if (runningMutationListenerQueue) return;
+  runningMutationListenerQueue = true;
+  mutationListenerQueue.forEach((fn) => fn());
+  runningMutationListenerQueue = false;
+}
+
+let pureQueue = [] as Function[];
+
+let runningPureQueue = false;
+
+function flushPure() {
+  if (runningPureQueue) return;
+  runningPureQueue = true;
+  while (pureQueue.length) pureQueue.shift()!();
+  runningPureQueue = false;
+}
+
+function flushQueues() {
+  flushPure();
+  flushMutationListeners();
+  flushListeners();
 }

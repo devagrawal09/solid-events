@@ -1,6 +1,12 @@
 import { createRoot } from "solid-js";
 import { describe, expect, test } from "vitest";
-import { createEvent, createPartition, createTopic, halt } from ".";
+import {
+  createEvent,
+  createListener,
+  createMutationListener,
+  createPartition,
+  halt,
+} from ".";
 import { setTimeout } from "timers/promises";
 
 describe(`createEvent`, () => {
@@ -125,27 +131,79 @@ describe(`createPartition`, () => {
   });
 });
 
-describe(`createTopic`, () => {
-  test(`merges events`, () => {
-    const messages = [] as string[];
+describe(`createSubject`, () => {
+  test.todo(`need effects to run on server to test signals`);
+});
+
+describe(`createListener`, () => {
+  test(`is deferred`, () => {
+    const messages = [] as number[];
 
     const d = createRoot((d) => {
-      const [on1, emit1] = createEvent<string>();
-      const [on2, emit2] = createEvent<string>();
-      const on = createTopic(on1, on2);
-      on((p) => messages.push(p));
-
-      emit1(`hello`);
-      emit2(`world`);
-
+      const [on, emit] = createEvent();
+      createListener(on, () => messages.push(2));
+      on(() => messages.push(1));
+      emit(`hello`);
       return d;
     });
 
-    expect(messages).toEqual([`hello`, `world`]);
+    expect(messages).toEqual([1, 2]);
+    d();
+  });
+
+  test(`runs in event order`, () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [on, emit] = createEvent<number>();
+
+      createListener(on, (num) => messages.push(num));
+
+      const onDouble = on((num) => num * 2);
+      const onDoubleDouble = onDouble((num) => num * 2);
+
+      createListener(onDoubleDouble, (num) => messages.push(num));
+      createListener(onDouble, (num) => messages.push(num));
+      createListener(on, (num) => messages.push(num));
+
+      emit(1);
+      return d;
+    });
+
+    expect(messages).toEqual([1, 1, 2, 4]);
     d();
   });
 });
 
-describe(`createSubject`, () => {
-  test.todo(`need effects to run on server to test signals`);
+describe(`createMutationListener`, () => {
+  test(`is deferred`, () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [on, emit] = createEvent();
+      createMutationListener(on, () => messages.push(2));
+      on(() => messages.push(1));
+      emit(`hello`);
+      return d;
+    });
+
+    expect(messages).toEqual([1, 2]);
+    d();
+  });
+
+  test(`is deferred before listener`, () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [on, emit] = createEvent();
+      createListener(on, () => messages.push(3));
+      createMutationListener(on, () => messages.push(2));
+      on(() => messages.push(1));
+      emit(`hello`);
+      return d;
+    });
+
+    expect(messages).toEqual([1, 2, 3]);
+    d();
+  });
 });
