@@ -3,6 +3,7 @@
   "version": "0.0.5",
   "description": "Declarative event composition and state derivation primitives for Solidjs",
   "main": "index.ts",
+  "type": "module",
   "scripts": {
     "test": "vitest"
   },

@@ -56,7 +56,10 @@ function makeHandler<E>($: Observable<Promise<E | HaltError> | E>): Handler<E> {
 
 export function createEvent<E = any>(): [Handler<E>, Emitter<E>] {
   const $ = new Subject<E>();
-  return [makeHandler($), (e) => ($.next(e), flushQueues())] as const;
+  return [
+    makeHandler($),
+    (e) => (pureQueue.push(() => $.next(e)), flushQueues()),
+  ] as const;
 }
 
 export function createSubject<T>(
@@ -232,4 +235,107 @@ export function introspectQueues() {
     mutationListenerQueue.length,
     listenerQueue.length
   );
+}
+
+export type TopicHandler<T extends Record<string, any>> = {
+  <K extends keyof T, O>(
+    key: K,
+    transform: (e: T[K]) => Promise<O> | O
+  ): Handler<O>;
+  <K extends keyof T>(key: K): TopicHandler<T[K]>;
+
+  <K1 extends keyof T, K2 extends keyof T[K1], O>(
+    key1: K1,
+    key2: K2,
+    transform: (e: T[K1][K2]) => Promise<O> | O
+  ): Handler<O>;
+  <K1 extends keyof T, K2 extends keyof T[K1]>(
+    key1: K1,
+    key2: K2
+  ): TopicHandler<T[K1][K2]>;
+
+  <K1 extends keyof T, K2 extends keyof T[K1], K3 extends keyof T[K1][K2], O>(
+    key1: K1,
+    key2: K2,
+    key3: K3,
+    transform: (e: T[K1][K2][K3]) => Promise<O> | O
+  ): Handler<O>;
+  <K1 extends keyof T, K2 extends keyof T[K1], K3 extends keyof T[K1][K2]>(
+    key1: K1,
+    key2: K2,
+    key3: K3
+  ): TopicHandler<T[K1][K2][K3]>;
+};
+export type TopicEmitter<T extends Record<string, any>> = {
+  (e: T): void;
+  <K extends keyof T>(key: K, e: T[K]): void;
+  <K1 extends keyof T, K2 extends keyof T[K1]>(
+    key1: K1,
+    key2: K2,
+    e: T[K1][K2]
+  ): void;
+  <K1 extends keyof T, K2 extends keyof T[K1], K3 extends keyof T[K1][K2]>(
+    key1: K1,
+    key2: K2,
+    key3: K3,
+    e: T[K1][K2][K3]
+  ): void;
+};
+
+const $EVENT = Symbol("event");
+type TopicNode = {
+  [$EVENT]?: [Handler<any>, Emitter<any>];
+  [key: string]: TopicNode;
+};
+
+export function createTopic<T extends Record<string, any>>() {
+  const topicTree: TopicNode = {};
+
+  // @ts-expect-error
+  const on: TopicHandler<T> = (...key: (string | ((e: any) => any))[]) => {
+    const transform = key.pop()!;
+
+    if (typeof transform !== "function") {
+      // @ts-expect-error
+      return (...args: any[]) => on(...key, transform, ...args);
+    }
+
+    const node = (key as string[]).reduce((node, k) => {
+      if (!node[k]) node[k] = {};
+      return node[k];
+    }, topicTree);
+
+    if (!node[$EVENT]) {
+      node[$EVENT] = createEvent();
+    }
+
+    return node[$EVENT][0](transform);
+  };
+
+  const emit: TopicEmitter<T> = (...key: (string | any)[]) => {
+    const payload = key.pop()! as any;
+
+    if (typeof payload === "object") {
+      Object.keys(payload).forEach((k) => {
+        // @ts-expect-error
+        emit(...key, k, payload[k]);
+      });
+      return;
+    }
+
+    for (let i = 0; i <= key.length; i++) {
+      let p = payload;
+      key
+        .slice(i)
+        .toReversed()
+        .forEach((k) => {
+          p = { [k]: p };
+        });
+
+      const node = key.slice(0, i).reduce((node, k) => node[k], topicTree);
+      node[$EVENT]?.[1](p);
+    }
+  };
+
+  return [on, emit] as const;
 }

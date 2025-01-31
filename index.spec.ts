@@ -6,6 +6,7 @@ import {
   createMutationListener,
   createPartition,
   createSyncListener,
+  createTopic,
   halt,
 } from ".";
 import { setTimeout } from "timers/promises";
@@ -260,6 +261,72 @@ describe(`createSyncListener`, () => {
 
     await setTimeout(10);
     expect(messages).toEqual([0, 1, 2]);
+    d();
+  });
+});
+
+describe(`createTopic`, () => {
+  test(`emits to multiple listeners`, () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [onTopic, emitTopic] = createTopic<{ a: number; b: number }>();
+
+      onTopic(`a`, (p) => messages.push(p));
+      onTopic(`b`, (p) => messages.push(p + 1));
+
+      emitTopic(`a`, 1);
+      emitTopic(`b`, 2);
+      return d;
+    });
+
+    expect(messages).toEqual([1, 3]);
+    d();
+  });
+
+  test(`emits to nested listeners`, () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [onTopic, emitTopic] = createTopic<{
+        a: number;
+        b: { c: number };
+      }>();
+
+      onTopic(`a`, (p) => messages.push(p));
+      onTopic(`b`, (p) => messages.push(p.c));
+      onTopic(`b`, `c`, (p) => messages.push(p));
+
+      emitTopic(`a`, 1);
+      emitTopic(`b`, { c: 2 });
+      emitTopic(`b`, `c`, 3);
+      emitTopic({ a: 4, b: { c: 5 } });
+
+      return d;
+    });
+
+    expect(messages).toEqual([1, 2, 2, 3, 3, 4, 5, 5]);
+    d();
+  });
+
+  test(`transforms into new topic handlers`, () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [onTopic, emitTopic] = createTopic<{ a: { b: number } }>();
+
+      const onB = onTopic(`a`, (p) => p.b);
+      const onTopicA = onTopic(`a`);
+
+      onB((p) => messages.push(p));
+      onTopicA(`b`, (p) => messages.push(p));
+
+      emitTopic(`a`, { b: 1 });
+      emitTopic(`a`, `b`, 2);
+      return d;
+    });
+
+    expect(messages).toEqual([1, 1, 2, 2]);
     d();
   });
 });
