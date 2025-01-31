@@ -145,6 +145,7 @@ export function createListener<E>(
 ) {
   handler((e) => {
     listenerQueue.push(() => effect(e));
+    scheduleFlush();
   });
 }
 
@@ -157,6 +158,7 @@ export function createSyncListener<E>(
     // @ts-expect-error
     (p) => {
       listenerQueue.push(() => effect(p));
+      scheduleFlush();
     }
   );
 }
@@ -169,6 +171,7 @@ function flushListeners() {
   if (runningListenerQueue) return;
   runningListenerQueue = true;
   listenerQueue.forEach((fn) => fn());
+  listenerQueue = [];
   runningListenerQueue = false;
 }
 
@@ -178,6 +181,7 @@ export function createMutationListener<E>(
 ) {
   handler((e) => {
     mutationListenerQueue.push(() => effect(e));
+    scheduleFlush();
   });
 }
 
@@ -189,6 +193,7 @@ function flushMutationListeners() {
   if (runningMutationListenerQueue) return;
   runningMutationListenerQueue = true;
   mutationListenerQueue.forEach((fn) => fn());
+  mutationListenerQueue = [];
   runningMutationListenerQueue = false;
 }
 
@@ -203,8 +208,28 @@ function flushPure() {
   runningPureQueue = false;
 }
 
-function flushQueues() {
+let scheduled = false;
+
+function scheduleFlush() {
+  if (scheduled) return;
+  scheduled = true;
+  queueMicrotask(() => {
+    scheduled = false;
+    flushQueues();
+  });
+}
+
+export function flushQueues() {
   flushPure();
   flushMutationListeners();
   flushListeners();
+}
+
+export function introspectQueues() {
+  console.log(
+    `Queues:`,
+    pureQueue.length,
+    mutationListenerQueue.length,
+    listenerQueue.length
+  );
 }

@@ -174,6 +174,36 @@ describe(`createListener`, () => {
     expect(messages).toEqual([1, 1, 2, 4]);
     d();
   });
+
+  test(`runs in event order with async`, async () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [on, emit] = createEvent<number>();
+
+      createListener(on, (num) => messages.push(num));
+
+      const onDouble = on(async (num) => {
+        await setTimeout(10);
+        return num * 2;
+      });
+      const onDoubleDouble = onDouble(async (num) => {
+        await setTimeout(10);
+        return num * 2;
+      });
+
+      createListener(onDoubleDouble, (num) => messages.push(num));
+      createListener(onDouble, (num) => messages.push(num));
+      createListener(on, (num) => messages.push(num));
+
+      emit(1);
+      return d;
+    });
+
+    await setTimeout(30);
+    expect(messages).toEqual([1, 1, 2, 4]);
+    d();
+  });
 });
 
 describe(`createMutationListener`, () => {
