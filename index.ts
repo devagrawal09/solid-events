@@ -12,22 +12,38 @@ import { createStore, produce, reconcile } from "solid-js/store";
 export type Handler<E> = (<O>(
   transform: (e: E) => Promise<O> | O
 ) => Handler<O>) & {
-  $: Observable<E>;
+  $: Observable<E | Promise<E | HaltError>>;
 };
 export type Emitter<E> = (e: E) => void;
 
-function makeHandler<E>($: Observable<E>): Handler<E> {
-  function handler<O>(transform: (e: E) => Promise<O> | O): Handler<O> {
-    const next$ = new Subject<O>();
+function makeHandler<E>($: Observable<Promise<E | HaltError> | E>): Handler<E> {
+  function handler<O>(
+    transform: (e: E) => Promise<O> | O,
+    syncTransform?: (e: Promise<E | undefined>) => void
+  ): Handler<O> {
+    const next$ = new Subject<Promise<O | HaltError> | O>();
     const sub = $.subscribe((e) => {
       try {
-        const res = transform(e);
-        if (res instanceof Promise)
-          res.then((o) => (next$.next(o), flushQueues()));
-        else pureQueue.push(() => next$.next(res));
+        if (syncTransform) {
+          syncTransform(
+            Promise.resolve(e).then((_e) => {
+              if (!(_e instanceof HaltError)) return _e;
+            })
+          );
+        }
+        const o =
+          e instanceof Promise
+            ? e
+                .then((_e) => {
+                  if (_e instanceof HaltError) return _e;
+                  return transform(_e);
+                })
+                .catch(handleError)
+            : transform(e);
+
+        pureQueue.push(() => next$.next(o));
       } catch (e) {
-        if (!(e instanceof HaltError)) throw e;
-        console.info(e.message);
+        handleError(e);
       }
     });
     onCleanup(() => sub.unsubscribe());
@@ -105,6 +121,11 @@ export class HaltError extends Error {
   }
 }
 
+function handleError(e: any) {
+  if (!(e instanceof HaltError)) throw e;
+  console.info(e.message);
+  return e;
+}
 export function halt(reason?: string): never {
   throw new HaltError(reason);
 }
@@ -125,6 +146,19 @@ export function createListener<E>(
   handler((e) => {
     listenerQueue.push(() => effect(e));
   });
+}
+
+export function createSyncListener<E>(
+  handler: Handler<E>,
+  effect: (payload: Promise<E | undefined>) => any
+) {
+  handler(
+    (e) => {},
+    // @ts-expect-error
+    (p) => {
+      listenerQueue.push(() => effect(p));
+    }
+  );
 }
 
 let listenerQueue = [] as Function[];

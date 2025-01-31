@@ -5,6 +5,7 @@ import {
   createListener,
   createMutationListener,
   createPartition,
+  createSyncListener,
   halt,
 } from ".";
 import { setTimeout } from "timers/promises";
@@ -78,7 +79,7 @@ describe(`createEvent`, () => {
 
     const d = createRoot((d) => {
       const [on, emit] = createEvent<string>();
-      const onValid = on((p) => (p.length < 3 ? halt() : p));
+      const onValid = on((p) => (p.length < 3 ? halt(`Huh`) : p));
       onValid((p) => messages.push(p));
       emit(`hello`);
       emit(`hi`);
@@ -204,6 +205,31 @@ describe(`createMutationListener`, () => {
     });
 
     expect(messages).toEqual([1, 2, 3]);
+    d();
+  });
+});
+
+describe(`createSyncListener`, () => {
+  test(`runs synchronously`, async () => {
+    const messages = [] as number[];
+
+    const d = createRoot((d) => {
+      const [on, emit] = createEvent<number>();
+      const onAsync = on(async (p) => {
+        await setTimeout(10);
+        return p + 1;
+      });
+      onAsync((p) => messages.push(p));
+      createSyncListener(onAsync, (p) => {
+        messages.push(0);
+        p.then((p) => p && messages.push(p + 1));
+      });
+      emit(0);
+      return d;
+    });
+
+    await setTimeout(10);
+    expect(messages).toEqual([0, 1, 2]);
     d();
   });
 });
